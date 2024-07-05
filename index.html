@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能量加油站</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6B8DD6 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            overflow: hidden;
+        }
+        h1 {
+            color: #ffffff;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+        }
+        .carousel {
+            display: flex;
+            width: 600px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .cards {
+            display: flex;
+            animation: scroll 20s linear infinite;
+        }
+        .cards.paused {
+            animation-play-state: paused;
+        }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .card {
+            width: 150px;
+            height: 200px;
+            perspective: 1000px;
+            cursor: pointer;
+            margin: 0 10px;
+            flex-shrink: 0;
+        }
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+        }
+        .card-front {
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 2;
+        }
+        .card-back {
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: rotateY(180deg);
+            padding: 15px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .interpretation {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+        }
+        .message-display {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>能量加油站</h1>
+        <div class="carousel">
+            <div class="cards" id="cardsContainer">
+                <!-- 卡片将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        <div class="message-display" id="messageDisplay">
+            点击卡片获取能量信息
+        </div>
+    </div>
+
+    <script>
+        const emojis = ['🌟', '🍀', '🦋', '🌈', '🌺', '🌞', '🌙', '🐬', '🦄', '🐘', '🦉', '🦁', '🐯', '🐼', '🐳'];
+        const interpretations = [
+            [
+                "闪耀的机会即将来临，保持积极心态！",
+                "你的光芒无可替代，继续闪耀吧！",
+                "星光为你指引方向，勇敢前行。",
+                "你就是自己生命中最亮的星。",
+                "内在的光芒正在引导你前行。"
+            ],
+            [
+                "好运将伴随左右，珍惜当下。",
+                "幸运女神正在向你微笑。",
+                "相信自己，好运自然来。",
+                "机遇就在眼前，大胆把握。",
+                "你的努力终将开花结果。"
+            ],
+            [
+                "轻盈自在，展翅高飞的时候到了。",
+                "改变正在悄然发生，拥抱新的自己。",
+                "生命充满无限可能，勇于尝试。",
+                "让心灵如蝴蝶般自由翱翔。",
+                "每一次蜕变都是成长的契机。"
+            ],
+            [
+                "多彩人生，尽情绽放你的色彩。",
+                "生活如彩虹，美好在后头。",
+                "你的人生是一幅绚丽的画卷。",
+                "拥抱多样性，发现更多精彩。",
+                "每一种色彩都是你的独特魅力。"
+            ],
+            [
+                "美丽绽放，散发你的独特魅力。",
+                "如花绽放，你的美丽感染他人。",
+                "保持温柔，却不失坚强。",
+                "你的魅力如花香般沁人心脾。",
+                "绽放自我，让世界感受你的存在。"
+            ],
+            [
+                "阳光总在风雨后，坚持就是胜利。",
+                "温暖如阳光，照亮他人也照亮自己。",
+                "积极乐观，驱散内心的阴霾。",
+                "你是别人生命中的暖阳。",
+                "保持热情，如旭日东升。"
+            ],
+            [
+                "夜晚也有它的美，享受宁静时光。",
+                "月光下思考，获得内心的平静。",
+                "黑夜给你柔软，月光给你温柔。",
+                "静谧时刻里，聆听内心的声音。",
+                "夜晚是放松和重新充电的时刻。"
+            ],
+            [
+                "如海豚般自在畅游人生海洋。",
+                "保持好奇和玩耍的心态。",
+                "灵活应对，在困境中找到出路。",
+                "与生活嬉戏，保持愉悦的心情。",
+                "智慧和欢乐，让你的生活更精彩。"
+            ],
+            [
+                "独特而神奇，创造属于你的奇迹。",
+                "相信梦想，它们终会实现。",
+                "你的与众不同是最大的优势。",
+                "magic魅力藏在你的日常举动中。",
+                "创造奇迹的能力一直在你身边。"
+            ],
+            [
+                "坚韧有力，稳步前行。",
+                "你比想象中更坚强。",
+                "慢慢来，比快更快。",
+                "坚持不懈，终会达成目标。",
+                "强大来自内心，继续前进。"
+            ],
+            [
+                "智慧如猫头鹰，洞察先机。",
+                "安静观察，聪明决策。",
+                "你的洞察力是最大的财富。",
+                "在夜色中也能看清方向。",
+                "智慧让你在关键时刻做出正确选择。"
+            ],
+            [
+                "勇气如狮子，无所畏惧。",
+                "勇敢面对挑战，你就是生活的王者。",
+                "内心的力量让你无惧一切。",
+                "昂首挺胸，展现你的王者风范。",
+                "你的勇气激励着身边的人。"
+            ],
+            [
+                "充满激情，勇往直前。",
+                "热情是你最大的动力源泉。",
+                "保持激情，人生处处是精彩。",
+                "你的热情能够感染他人。",
+                "激情让你的生活充满色彩。"
+            ],
+            [
+                "内心的平和是最大的财富。",
+                "宁静致远，保持内心的安宁。",
+                "平和的心态助你渡过难关。",
+                "在喧嚣中保持内心的一片净土。",
+                "平和让你看到事物的本质。"
+            ],
+            [
+                "在人生的海洋中自在遨游。",
+                "随波逐流中保持自我，勇往直前。",
+                "生活如海洋，广阔而充满可能。",
+                "在变幻莫测中找到自己的方向。",
+                "你有能力征服生活的大海。"
+            ]
+        ];
+
+        function createCards() {
+            const cardsContainer = document.getElementById('cardsContainer');
+            let cardsHTML = '';
+            emojis.forEach((emoji, index) => {
+                cardsHTML += `
+                    <div class="card" data-index="${index}">
+                        <div class="card-inner">
+                            <div class="card-face card-front">${emoji}</div>
+                            <div class="card-face card-back">
+                                <div class="interpretation"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            cardsContainer.innerHTML = cardsHTML + cardsHTML; // 复制卡片以创建无缝循环效果
+        }
+
+        function flipCard(card) {
+            const cardsContainer = document.getElementById('cardsContainer');
+            const messageDisplay = document.getElementById('messageDisplay');
+            if (!card.classList.contains('flipped')) {
+                const index = parseInt(card.getAttribute('data-index'));
+                const randomInterpretation = interpretations[index][Math.floor(Math.random() * interpretations[index].length)];
+                const interpretationElement = card.querySelector('.interpretation');
+                interpretationElement.textContent = randomInterpretation;
+
+                // 更新消息显示区域
+                messageDisplay.textContent = randomInterpretation;
+                messageDisplay.style.opacity = '1';
+
+                card.classList.add('flipped');
+                cardsContainer.classList.add('paused');
+                
+                setTimeout(() => {
+                    card.classList.remove('flipped');
+                    cardsContainer.classList.remove('paused');
+                }, 1000);
+            }
+        }
+
+        createCards();
+
+        document.getElementById('cardsContainer').addEventListener('click', function(e) {
+            const card = e.target.closest('.card');
+            if (card) {
+                flipCard(card);
+            }
+        });
+    </script>
+</body>
+</html>
